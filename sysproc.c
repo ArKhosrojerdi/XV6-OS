@@ -84,11 +84,6 @@ int sys_uptime(void)
   return xticks;
 }
 
-int sys_getppid(void)
-{
-  return myproc()->parent->pid;
-}
-
 int sys_getChildren(int pid)
 {
   argint(0, &pid);

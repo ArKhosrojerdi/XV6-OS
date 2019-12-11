@@ -21,6 +21,3 @@
 #define SYS_mkdir 20
 #define SYS_close 21
 #define SYS_getChildren 22
-#define SYS_getppid 23
-// #define SYS_cps    22
-// #define SYS_chpr   23

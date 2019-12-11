@@ -7,6 +7,9 @@
 #include "proc.h"
 #include "spinlock.h"
 
+int j = 0;
+int pr[5];
+
 struct
 {
   struct spinlock lock;
@@ -546,14 +549,31 @@ void procdump(void)
 int iterateProcesses(int pid)
 {
   struct proc *p;
+  int i, flag = 0;
   acquire(&ptable.lock);
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-  {
     if (p->pid != 0)
+    {
       if (p->parent->pid == pid)
-        cprintf("parent %d : child %d\n", pid, p->pid);
-  }
-  cprintf("\n");
+      {
+        for (i = 0; i < 5; i++)
+        {
+          if (p->pid == pr[i])
+          {
+            flag = 1;
+            break;
+          }
+        }
+        if (!flag)
+        {
+          pr[j++] = p->pid;
+          cprintf("parent %d : child %d\n", pid, p->pid);
+          // cprintf("pr[%d] = %d\n", j, pr[j]);
+          // j = j + 1;
+        }
+      }
+    }
   release(&ptable.lock);
+  exit();
   return 1;
 }
