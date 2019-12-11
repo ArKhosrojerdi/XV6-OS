@@ -11,6 +11,13 @@ int main(int argc, char *argv[])
 	fork();
 	wait();
 
+	fork();
+	wait();
+	fork();
+	wait();
+	fork();
+	wait();
+
 	getChildren(3);
 
 	return 1;

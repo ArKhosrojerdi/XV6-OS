@@ -84,10 +84,17 @@ int sys_uptime(void)
   return xticks;
 }
 
-int sys_getChildren(int pid)
+int sys_getChildren(void)
 {
+  int pid;
   argint(0, &pid);
+  if (myproc()->parent->pid == pid)
+  {
+    cprintf("%d -> ", myproc()->parent->pid);
+    cprintf("%d\n", myproc()->pid);
+  }
   iterateProcesses(pid);
+  printPIDString();
   exit();
   return 1;
 }

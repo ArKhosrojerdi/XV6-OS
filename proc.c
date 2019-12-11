@@ -7,8 +7,8 @@
 #include "proc.h"
 #include "spinlock.h"
 
-int j = 0;
-int pr[5];
+int chCounter = 0; // counter for holding index for children array
+int ch[1000]; // children array
 
 struct
 {
@@ -546,19 +546,20 @@ void procdump(void)
   }
 }
 
-int iterateProcesses(int pid)
+void iterateProcesses(int pid)
 {
   struct proc *p;
-  int i, flag = 0;
-  acquire(&ptable.lock);
+  int i, flag;
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    flag = 0;
     if (p->pid != 0)
     {
       if (p->parent->pid == pid)
       {
         for (i = 0; i < 5; i++)
         {
-          if (p->pid == pr[i])
+          if (p->pid == ch[i])
           {
             flag = 1;
             break;
@@ -566,14 +567,30 @@ int iterateProcesses(int pid)
         }
         if (!flag)
         {
-          pr[j++] = p->pid;
-          cprintf("parent %d : child %d\n", pid, p->pid);
-          // cprintf("pr[%d] = %d\n", j, pr[j]);
-          // j = j + 1;
+          ch[chCounter] = p->pid;
+          chCounter = chCounter + 1;
+
+          // cprintf("%d", p->pid);
         }
       }
     }
-  release(&ptable.lock);
-  exit();
-  return 1;
+  }
+}
+
+void printPIDString(void)
+{
+  int k, ndigit = 10;
+  int string = 0;
+  for (k = 0; k < chCounter; k++)
+    if (ch[k] >= 10)
+    {
+      ndigit *= 10;
+      break;
+    }
+
+  k = chCounter - 1;
+  for (; k >= 0; k--)
+    string = ch[k] + (string * ndigit);
+
+  cprintf("string = %d\n", string);
 }
