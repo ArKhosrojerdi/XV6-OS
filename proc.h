@@ -49,10 +49,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
- 
-  // This is the first change 001 
-  int priority;
-  int calculatePriority;
+
+  int priority;                // Process priority
+  int calculatedPriority;       // calculated priority : calculatedPriority += priority
 };
 //   text
 //   original data and bss

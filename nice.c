@@ -4,8 +4,7 @@
 #include "fcntl.h"
 
 int
-main(int argc, char *argv[])
-{
+main(int argc, char *argv[]) {
 	int priority, pid;
 	if (argc < 3) {
 		printf(2, "Usage: nice pid priority\n");
