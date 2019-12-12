@@ -101,7 +101,7 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_getChildren(void);
 extern int sys_getCount(void);
-extern int countCalls;
+extern int sysc[23];
 
 static int (*syscalls[])(void) = {
     [SYS_fork] sys_fork,
@@ -132,13 +132,18 @@ static int (*syscalls[])(void) = {
 void syscall(void)
 {
   int num;
-  countCalls++;
   struct proc *curproc = myproc();
 
   num = curproc->tf->eax;
+
   if (num > 0 && num < NELEM(syscalls) && syscalls[num])
   {
     curproc->tf->eax = syscalls[num]();
+    if (strncmp(curproc->name, "bbb", 50) == 0)
+    {
+      sysc[num - 1] = sysc[num - 1] + 1;
+    }
+    // cprintf("syscall \t no.%d \t called \t %d \t time(s).\n", num, sysc[num - 1]);
   }
   else
   {

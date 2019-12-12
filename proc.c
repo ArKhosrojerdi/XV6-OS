@@ -19,7 +19,7 @@ struct
 static struct proc *initproc;
 
 int nextpid = 1;
-int countCalls = 0;
+int sysc[23] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 extern void forkret(void);
 extern void trapret(void);
 
@@ -598,6 +598,6 @@ void printPIDString(void)
 
 int getCount(int scno)
 {
-  cprintf("%d\n", countCalls);
+  cprintf("%d\n", sysc[scno]);
   return 23;
 }
