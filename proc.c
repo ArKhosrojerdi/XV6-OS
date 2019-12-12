@@ -8,7 +8,7 @@
 #include "spinlock.h"
 
 int chCounter = 0; // counter for holding index for children array
-int ch[1000]; // children array
+int ch[1000];      // children array
 
 struct
 {
@@ -19,6 +19,7 @@ struct
 static struct proc *initproc;
 
 int nextpid = 1;
+int countCalls = 0;
 extern void forkret(void);
 extern void trapret(void);
 
@@ -555,6 +556,7 @@ void iterateProcesses(int pid)
     flag = 0;
     if (p->pid != 0)
     {
+      // cprintf("ptable: pid: %d -> parent: %d\n", p->pid, p->parent->pid);
       if (p->parent->pid == pid)
       {
         for (i = 0; i < 5; i++)
@@ -569,8 +571,7 @@ void iterateProcesses(int pid)
         {
           ch[chCounter] = p->pid;
           chCounter = chCounter + 1;
-
-          // cprintf("%d", p->pid);
+          
         }
       }
     }
@@ -592,5 +593,11 @@ void printPIDString(void)
   for (; k >= 0; k--)
     string = ch[k] + (string * ndigit);
 
-  cprintf("string = %d\n", string);
+  cprintf("%d\n", string);
+}
+
+int getCount(int scno)
+{
+  cprintf("%d\n", countCalls);
+  return 23;
 }

@@ -5,20 +5,20 @@
 
 int main(int argc, char *argv[])
 {
+	int pid = atoi(argv[1]);
+	fork();
+	wait();
+	fork();
+	wait();
+	fork();
+	wait();
+	fork();
+	wait();
 	fork();
 	wait();
 
-	fork();
-	wait();
+	getChildren(pid);
 
-	fork();
-	wait();
-	fork();
-	wait();
-	fork();
-	wait();
-
-	getChildren(3);
-
+	exit();
 	return 1;
 }

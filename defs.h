@@ -122,6 +122,7 @@ void            wakeup(void*);
 void            yield(void);
 void            iterateProcesses(int);
 void            printPIDString(void);
+int             getCount(int);
  
 // swtch.S
 void            swtch(struct context**, struct context*);

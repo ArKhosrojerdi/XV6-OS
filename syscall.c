@@ -100,6 +100,8 @@ extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_getChildren(void);
+extern int sys_getCount(void);
+extern int countCalls;
 
 static int (*syscalls[])(void) = {
     [SYS_fork] sys_fork,
@@ -124,11 +126,13 @@ static int (*syscalls[])(void) = {
     [SYS_mkdir] sys_mkdir,
     [SYS_close] sys_close,
     [SYS_getChildren] sys_getChildren,
+    [SYS_getCount] sys_getCount,
 };
 
 void syscall(void)
 {
   int num;
+  countCalls++;
   struct proc *curproc = myproc();
 
   num = curproc->tf->eax;

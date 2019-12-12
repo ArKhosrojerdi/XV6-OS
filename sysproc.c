@@ -7,19 +7,28 @@
 #include "mmu.h"
 #include "proc.h"
 
+int sysc[1000];
+int syscCounter = 0;
+
 int sys_fork(void)
 {
+  sysc[syscCounter] = 1;
+  syscCounter = syscCounter + 1;
   return fork();
 }
 
 int sys_exit(void)
 {
+  sysc[syscCounter] = 2;
+  syscCounter = syscCounter + 1;
   exit();
   return 0; // not reached
 }
 
 int sys_wait(void)
 {
+  sysc[syscCounter] = 3;
+  syscCounter = syscCounter + 1;
   return wait();
 }
 
@@ -84,17 +93,23 @@ int sys_uptime(void)
   return xticks;
 }
 
-int sys_getChildren(void)
+void sys_getChildren(void)
 {
   int pid;
   argint(0, &pid);
-  if (myproc()->parent->pid == pid)
-  {
-    cprintf("%d -> ", myproc()->parent->pid);
-    cprintf("%d\n", myproc()->pid);
-  }
+  // if (myproc()->parent->pid == pid)
+  // {
+    // cprintf("%d -> ", myproc()->parent->pid);
+    // cprintf("%d\n", myproc()->pid);
+  // }
   iterateProcesses(pid);
-  printPIDString();
+  if (pid == myproc()->pid)
+    printPIDString();
   exit();
-  return 1;
+}
+
+int sys_getCount(void)
+{
+  int scno = argint(0, &scno);
+  return getCount(scno);
 }
