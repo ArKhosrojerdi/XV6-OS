@@ -110,6 +110,7 @@ void sys_getChildren(void)
 
 int sys_getCount(void)
 {
-  int scno = argint(0, &scno);
+  int scno;
+  argint(0, &scno);
   return getCount(scno);
 }

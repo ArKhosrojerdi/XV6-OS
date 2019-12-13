@@ -598,6 +598,6 @@ void printPIDString(void)
 
 int getCount(int scno)
 {
-  cprintf("%d\n", sysc[scno]);
+  cprintf("%d\n", sysc[scno - 1]);
   return 23;
 }

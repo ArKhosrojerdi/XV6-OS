@@ -140,10 +140,7 @@ void syscall(void)
   {
     curproc->tf->eax = syscalls[num]();
     if (strncmp(curproc->name, "bbb", 50) == 0)
-    {
       sysc[num - 1] = sysc[num - 1] + 1;
-    }
-    // cprintf("syscall \t no.%d \t called \t %d \t time(s).\n", num, sysc[num - 1]);
   }
   else
   {

@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[])
 {
-  int sc = atoi(argv[1]);
+  int scno = atoi(argv[1]);
   // fork();
   // wait();
   // fork();
@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
   getpid();
   getpid();
   getpid();
+  // printf(1, "hi\n");
   printf(1, "hi\n");
-  printf(1, "hi\n");
-  getCount(sc);
+  getCount(scno);
   exit();
   return 1;
 }
