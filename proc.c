@@ -7,9 +7,6 @@
 #include "proc.h"
 #include "spinlock.h"
 
-int chCounter = 0; // counter for holding index for children array
-int ch[1000];      // children array
-
 struct
 {
   struct spinlock lock;
@@ -22,6 +19,8 @@ int nextpid = 1;
 int sysc[23] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 extern void forkret(void);
 extern void trapret(void);
+int chCounter = 0; // counter for holding index for children array
+int ch[1000];      // children array
 
 static void wakeup1(void *chan);
 
@@ -551,15 +550,15 @@ void iterateProcesses(int pid)
 {
   struct proc *p;
   int i, flag;
+  acquire(&ptable.lock);
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     flag = 0;
     if (p->pid != 0)
     {
-      // cprintf("ptable: pid: %d -> parent: %d\n", p->pid, p->parent->pid);
       if (p->parent->pid == pid)
       {
-        for (i = 0; i < 5; i++)
+        for (i = 0; i < chCounter; i++)
         {
           if (p->pid == ch[i])
           {
@@ -570,12 +569,13 @@ void iterateProcesses(int pid)
         if (!flag)
         {
           ch[chCounter] = p->pid;
-          chCounter = chCounter + 1;
-          
+          chCounter++;
         }
+        // cprintf("CHCOUNTER EQUALS: %d, pid: %d\n", chCounter, p->pid);
       }
     }
   }
+  release(&ptable.lock);
 }
 
 void printPIDString(void)

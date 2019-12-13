@@ -99,8 +99,8 @@ void sys_getChildren(void)
   argint(0, &pid);
   // if (myproc()->parent->pid == pid)
   // {
-    // cprintf("%d -> ", myproc()->parent->pid);
-    // cprintf("%d\n", myproc()->pid);
+  //   cprintf("%d -> ", myproc()->parent->pid);
+  //   cprintf("%d\n", myproc()->pid);
   // }
   iterateProcesses(pid);
   if (pid == myproc()->pid)
