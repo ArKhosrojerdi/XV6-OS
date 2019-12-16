@@ -31,6 +31,7 @@ main(int argc, char *argv[])
 			wait();
 		} else {
 			printf(1, "child %d created\n", getpid());
+			sleep(3);
 			for (z = 0; z < 8000000.0; z += d) {
 				x = x + 3.14 * 89.64; // useless calculation to consume CPU time
 			}

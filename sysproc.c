@@ -114,3 +114,14 @@ int sys_getCount(void)
   argint(0, &scno);
   return getCount(scno);
 }
+
+int sys_changePriority(int priorityValue)
+{
+  // if ()
+  return 1;
+}
+
+int sys_cps(void)
+{
+  return cps();
+}

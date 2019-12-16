@@ -25,6 +25,8 @@ int sleep(int);
 int uptime(void);
 void getChildren(int);
 int getCount(int);
+int changePriority(int);
+int cps(void);
 
 // ulib.c
 int stat(const char *, struct stat *);

@@ -79,7 +79,10 @@ static struct proc *
 allocproc(void)
 {
   struct proc *p;
+  struct proc *p1; // a process for finding minimum calculatedPriority
+
   char *sp;
+  int ptable_empty = 1; // if ptable is empty this will be 1
 
   acquire(&ptable.lock);
 
@@ -93,13 +96,40 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  // p->priority = 5; // Default
+  int minpr = 1000000; // minimum priority saves in this variable
+
+  // check emptiness of ptable and minimum priority
+  for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+  {
+    ptable_empty = 0; // ptable is not empty
+    // minimum calculatedPriority among all processes
+    if (p1->calculatedPriority < minpr)
+      minpr = p1->calculatedPriority;
+  }
+
+  // ptable is empty so calculatedPriority must be 0
+  if (ptable_empty)
+  {
+    p->priority = 0;
+    p->calculatedPriority = 0;
+  }
+  // min{5, calculatedPriority among all processes}
+  else
+  {
+    if (minpr < 5)
+      p->calculatedPriority = minpr;
+    else
+      p->calculatedPriority = 5;
+  }
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
   if ((p->kstack = kalloc()) == 0)
   {
     p->state = UNUSED;
+    p->priority = 0; // set priority to 0 after terminating
+    p->calculatedPriority = 0;
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
@@ -202,6 +232,8 @@ int fork(void)
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
+    np->priority = 0; // set priority to 0 after terminating
+    np->calculatedPriority = 0;
     return -1;
   }
   np->sz = curproc->sz;
@@ -308,6 +340,8 @@ int wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+        p->priority = 0; // set priority to 0 after terminating
+        p->calculatedPriority = 0;
         release(&ptable.lock);
         return pid;
       }
@@ -336,6 +370,8 @@ int wait(void)
 void scheduler(void)
 {
   struct proc *p;
+  // struct proc *p1;
+
   struct cpu *c = mycpu();
   c->proc = 0;
 
@@ -344,6 +380,7 @@ void scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
+    // struct proc *highP = 0;
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -351,13 +388,28 @@ void scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
+      // highP = p;
+      // for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+      // {
+      //   if (p1->state != RUNNABLE)
+      //     continue;
+
+      //   p->calculatedPriority += p->priority;
+      //   if (highP->calculatedPriority > p1->calculatedPriority)
+      //   {
+      //     highP = p1;
+      //     // cprintf("hppr \t %d \t hpcp \t %d\n", highP->priority, highP->calculatedPriority);
+      //   }
+      // }
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+
+      // p = highP; // process with highest priority is the next process
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
@@ -600,4 +652,26 @@ int getCount(int scno)
 {
   cprintf("%d\n", sysc[scno - 1]);
   return 23;
+}
+
+int cps()
+{
+  struct proc *p;
+  sti();
+  acquire(&ptable.lock);
+  cprintf("name \t pid \t state \t \t priority \t cpr\n");
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state == SLEEPING)
+      cprintf("%s \t %d \t SLEEPING \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
+    else if (p->state == RUNNING)
+      cprintf("%s \t %d \t RUNNING \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
+    else if (p->state == RUNNABLE)
+      cprintf("%s \t %d \t RUNNABLE \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
+    else if (p->state == UNUSED)
+      cprintf("%s \t %d \t UNUSED \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
+  }
+  release(&ptable.lock);
+
+  return 24;
 }
