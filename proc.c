@@ -82,7 +82,7 @@ allocproc(void)
   struct proc *p1; // a process for finding minimum calculatedPriority
 
   char *sp;
-  int ptable_empty = 1; // if ptable is empty this will be 1
+  // int ptable_empty = 1; // if ptable is empty this will be 1
 
   acquire(&ptable.lock);
 
@@ -96,31 +96,24 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = 5;
   int minpr = 1000000; // minimum priority saves in this variable
 
+  // p->priority = 5;
+
   // check emptiness of ptable and minimum priority
-  for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+  for (p1 = ptable.proc + 2; p1 < &ptable.proc[NPROC]; p1++)
   {
-    ptable_empty = 0; // ptable is not empty
     // minimum calculatedPriority among all processes
     if (p1->calculatedPriority < minpr)
       minpr = p1->calculatedPriority;
   }
 
-  // ptable is empty so calculatedPriority must be 0
-  if (ptable_empty)
-  {
-    p->priority = 0;
-    p->calculatedPriority = 0;
-  }
-  // min{5, calculatedPriority among all processes}
+  // min{5, calculatedPriority among all processes.
+  if (minpr < 5)
+    p->calculatedPriority = minpr;
   else
-  {
-    if (minpr < 5)
-      p->calculatedPriority = minpr;
-    else
-      p->calculatedPriority = 5;
-  }
+    p->calculatedPriority = 5;
 
   release(&ptable.lock);
 
@@ -128,7 +121,7 @@ found:
   if ((p->kstack = kalloc()) == 0)
   {
     p->state = UNUSED;
-    p->priority = 0; // set priority to 0 after terminating
+    p->priority = 0;
     p->calculatedPriority = 0;
     return 0;
   }
@@ -306,7 +299,9 @@ void exit(void)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
+  // cprintf("1: \t %d \t %d\n", curproc->pid, curproc->calculatedPriority);
   sched();
+  cprintf("zombieExitError: \t %d \t %d\n", curproc->pid, curproc->calculatedPriority);
   panic("zombie exit");
 }
 
@@ -340,7 +335,8 @@ int wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
-        p->priority = 0; // set priority to 0 after terminating
+        // set priorities to 0 after terminating
+        p->priority = 0;
         p->calculatedPriority = 0;
         release(&ptable.lock);
         return pid;
@@ -370,7 +366,7 @@ int wait(void)
 void scheduler(void)
 {
   struct proc *p;
-  // struct proc *p1;
+  struct proc *p1;
 
   struct cpu *c = mycpu();
   c->proc = 0;
@@ -380,7 +376,6 @@ void scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
-    // struct proc *highP = 0;
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -388,25 +383,22 @@ void scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
-      // highP = p;
-      // for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
-      // {
-      //   if (p1->state != RUNNABLE)
-      //     continue;
-
-      //   p->calculatedPriority += p->priority;
-      //   if (highP->calculatedPriority > p1->calculatedPriority)
-      //   {
-      //     highP = p1;
-      //     // cprintf("hppr \t %d \t hpcp \t %d\n", highP->priority, highP->calculatedPriority);
-      //   }
-      // }
+      struct proc *highP = ptable.proc;
+      for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+      {
+        if (p1->state != RUNNABLE)
+          continue;
+        if (highP->calculatedPriority > p1->calculatedPriority)
+          highP = p1;
+      }
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
 
-      // p = highP; // process with highest priority is the next process
+      p = highP; // process with highest priority is the next process
+      p->calculatedPriority += p->priority;
+      cprintf("p->pid: \t %d \t p->calcPri: \t %d\n", p->pid, p->calculatedPriority);
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -654,7 +646,7 @@ int getCount(int scno)
   return 23;
 }
 
-int cps()
+int cps(void)
 {
   struct proc *p;
   sti();
@@ -668,10 +660,18 @@ int cps()
       cprintf("%s \t %d \t RUNNING \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
     else if (p->state == RUNNABLE)
       cprintf("%s \t %d \t RUNNABLE \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
-    else if (p->state == UNUSED)
-      cprintf("%s \t %d \t UNUSED \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
+    // else if (p->state == UNUSED)
+    //   cprintf("%s \t %d \t UNUSED \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
   }
   release(&ptable.lock);
 
   return 24;
+}
+
+int changePriority(int priority)
+{
+  struct proc *p = myproc();
+  p->priority = priority;
+  exit();
+  return 1;
 }

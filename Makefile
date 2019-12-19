@@ -185,6 +185,7 @@ UPROGS=\
 	_getCountTest\
 	_foo\
 	_ps\
+	_changePriority\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

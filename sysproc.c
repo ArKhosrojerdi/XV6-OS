@@ -115,9 +115,13 @@ int sys_getCount(void)
   return getCount(scno);
 }
 
-int sys_changePriority(int priorityValue)
+int sys_changePriority(void)
 {
-  // if ()
+  int pr;
+  if (argint(0, &pr) < 0)
+    return -1;
+
+  return changePriority(pr);
   return 1;
 }
 

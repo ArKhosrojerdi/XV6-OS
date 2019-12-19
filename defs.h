@@ -123,6 +123,7 @@ void            yield(void);
 void            iterateProcesses(int);
 void            printPIDString(void);
 int             getCount(int);
+int             changePriority(int);
 int             cps(void);
  
 // swtch.S
