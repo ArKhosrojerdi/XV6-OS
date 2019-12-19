@@ -104,6 +104,7 @@ extern int sys_getCount(void);
 extern int sysc[23];
 extern int sys_changePriority(void);
 extern int sys_cps(void);
+extern int sys_changePolicy(void);
 
 static int (*syscalls[])(void) = {
     [SYS_fork] sys_fork,
@@ -131,6 +132,7 @@ static int (*syscalls[])(void) = {
     [SYS_getCount] sys_getCount,
     [SYS_changePriority] sys_changePriority,
     [SYS_cps] sys_cps,
+    [SYS_changePolicy] sys_changePolicy,
 };
 
 void syscall(void)
@@ -143,7 +145,7 @@ void syscall(void)
   if (num > 0 && num < NELEM(syscalls) && syscalls[num])
   {
     curproc->tf->eax = syscalls[num]();
-    if (strncmp(curproc->name, "bbb", 50) == 0)
+    if (strncmp(curproc->name, "getCountTest", 50) == 0)
       sysc[num - 1] = sysc[num - 1] + 1;
   }
   else

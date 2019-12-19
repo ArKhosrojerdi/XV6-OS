@@ -186,6 +186,7 @@ UPROGS=\
 	_foo\
 	_ps\
 	_changePriority\
+	_changePolicy\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

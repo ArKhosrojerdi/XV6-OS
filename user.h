@@ -27,6 +27,7 @@ void getChildren(int);
 int getCount(int);
 int changePriority(int);
 int cps(void);
+int changePolicy(int);
 
 // ulib.c
 int stat(const char *, struct stat *);

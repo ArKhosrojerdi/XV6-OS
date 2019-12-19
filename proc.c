@@ -383,22 +383,23 @@ void scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
-      struct proc *highP = ptable.proc;
-      for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+      if (policy == 2)
       {
-        if (p1->state != RUNNABLE)
-          continue;
-        if (highP->calculatedPriority > p1->calculatedPriority)
-          highP = p1;
+        struct proc *highP = ptable.proc;
+        for (p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+        {
+          if (p1->state != RUNNABLE)
+            continue;
+          if (highP->calculatedPriority > p1->calculatedPriority)
+            highP = p1;
+        }
+
+        // Switch to chosen process.  It is the process's job
+        // to release ptable.lock and then reacquire it
+        // before jumping back to us.
+        p = highP; // process with highest priority is the next process
+        p->calculatedPriority += p->priority;
       }
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-
-      p = highP; // process with highest priority is the next process
-      p->calculatedPriority += p->priority;
-      cprintf("p->pid: \t %d \t p->calcPri: \t %d\n", p->pid, p->calculatedPriority);
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -674,4 +675,12 @@ int changePriority(int priority)
   p->priority = priority;
   exit();
   return 1;
+}
+
+int changePolicy(int nPolicy)
+{
+  policy = nPolicy;
+  cprintf("%d\n", policy);
+  exit();
+  return 25;
 }

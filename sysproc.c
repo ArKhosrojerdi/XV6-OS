@@ -129,3 +129,16 @@ int sys_cps(void)
 {
   return cps();
 }
+
+int sys_changePolicy(void)
+{
+  int input;
+  argint(0, &input);
+  policy = input;
+  if (policy == 0 || policy == 1 || policy == 2)
+  {
+    changePolicy(policy);
+    return 1;
+  }
+  return -1;
+}
