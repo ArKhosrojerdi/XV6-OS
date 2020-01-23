@@ -51,7 +51,23 @@ struct proc {
   char name[16];               // Process name (debugging)
 
   int priority;                // Process priority
-  int calculatedPriority;       // calculated priority : calculatedPriority += priority
+  int calculatedPriority;      // calculated priority : calculatedPriority += priority
+
+  int creationTime;
+  int terminationTime;
+  int sleepingTime;
+  int readyTime;
+  int runningTime;
+  int zombieTime;
+
+  // these variables hold starting point of the state and ending point 
+  // recognized by ticks
+  int tkZmb;
+  int tkSlp;
+  int tkRun;
+  int tkRdy;
+
+  int ticket_no; // ticker for each process
 };
 //   text
 //   original data and bss

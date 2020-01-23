@@ -12,23 +12,17 @@ int syscCounter = 0;
 
 int sys_fork(void)
 {
-  sysc[syscCounter] = 1;
-  syscCounter = syscCounter + 1;
   return fork();
 }
 
 int sys_exit(void)
 {
-  sysc[syscCounter] = 2;
-  syscCounter = syscCounter + 1;
   exit();
   return 0; // not reached
 }
 
 int sys_wait(void)
 {
-  sysc[syscCounter] = 3;
-  syscCounter = syscCounter + 1;
   return wait();
 }
 
@@ -97,11 +91,6 @@ void sys_getChildren(void)
 {
   int pid;
   argint(0, &pid);
-  // if (myproc()->parent->pid == pid)
-  // {
-  //   cprintf("%d -> ", myproc()->parent->pid);
-  //   cprintf("%d\n", myproc()->pid);
-  // }
   iterateProcesses(pid);
   if (pid == myproc()->pid)
     printPIDString();
@@ -141,4 +130,20 @@ int sys_changePolicy(void)
     return 1;
   }
   return -1;
+}
+
+int sys_waitForChild(struct timeVariables *tv)
+{
+  waitForChild();
+  return 425;
+}
+
+void sys_ticketlockInit(void)
+{
+  ticketlockInit();
+}
+
+int sys_ticketlockTest(void)
+{
+  return ticketlockTest();
 }

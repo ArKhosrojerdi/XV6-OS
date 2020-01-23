@@ -106,7 +106,9 @@ void trap(struct trapframe *tf)
   if (myproc() && myproc()->state == RUNNING &&
       tf->trapno == T_IRQ0 + IRQ_TIMER)
   {
-    if (ticks % QUANTUM == 0 && (policy == 1 || policy == 2))
+    if (policy == 0)
+      yield();
+    else if (ticks % QUANTUM == 0 && (policy == 1 || policy == 2))
       yield();
   }
 

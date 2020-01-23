@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "ticketlock.h"
 
 struct
 {
@@ -13,10 +14,16 @@ struct
   struct proc proc[NPROC];
 } ptable;
 
+struct
+{
+  struct ticketlock lock;
+  struct proc proc[NPROC];
+} pttable;
+
 static struct proc *initproc;
 
 int nextpid = 1;
-int sysc[23] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int sysc[40] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 extern void forkret(void);
 extern void trapret(void);
 int chCounter = 0; // counter for holding index for children array
@@ -82,24 +89,27 @@ allocproc(void)
   struct proc *p1; // a process for finding minimum calculatedPriority
 
   char *sp;
-  // int ptable_empty = 1; // if ptable is empty this will be 1
 
   acquire(&ptable.lock);
-
+  // acquireTicketlock(&pttable.lock);
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if (p->state == UNUSED)
       goto found;
-
   release(&ptable.lock);
+  // releaseTicketlock(&pttable.lock);
   return 0;
 
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->priority = 5;
+  p->creationTime = ticks;
+  p->sleepingTime = 0;
+  p->readyTime = 0;
+  p->runningTime = 0;
+  p->zombieTime = 0;
+  // p->ticket_no = ticket;
   int minpr = 1000000; // minimum priority saves in this variable
-
-  // p->priority = 5;
 
   // check emptiness of ptable and minimum priority
   for (p1 = ptable.proc + 2; p1 < &ptable.proc[NPROC]; p1++)
@@ -108,7 +118,6 @@ found:
     if (p1->calculatedPriority < minpr)
       minpr = p1->calculatedPriority;
   }
-
   // min{5, calculatedPriority among all processes.
   if (minpr < 5)
     p->calculatedPriority = minpr;
@@ -175,9 +184,8 @@ void userinit(void)
   // writes to be visible, and the lock is also needed
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
-
   p->state = RUNNABLE;
-
+  p->tkRdy = ticks;
   release(&ptable.lock);
 }
 
@@ -206,7 +214,7 @@ int growproc(int n)
 
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
-// Caller must set state of returned proc to RUNNABLE.
+// Caller must set state of returned proc to .
 int fork(void)
 {
   int i, pid;
@@ -246,9 +254,8 @@ int fork(void)
   pid = np->pid;
 
   acquire(&ptable.lock);
-
   np->state = RUNNABLE;
-
+  np->tkRdy = ticks;
   release(&ptable.lock);
 
   return pid;
@@ -293,13 +300,16 @@ void exit(void)
     {
       p->parent = initproc;
       if (p->state == ZOMBIE)
+      {
+        p->zombieTime = p->zombieTime + ticks - p->tkZmb;
         wakeup1(initproc);
+      }
     }
   }
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
-  // cprintf("1: \t %d \t %d\n", curproc->pid, curproc->calculatedPriority);
+  curproc->tkZmb = ticks;
   sched();
   cprintf("zombieExitError: \t %d \t %d\n", curproc->pid, curproc->calculatedPriority);
   panic("zombie exit");
@@ -400,9 +410,11 @@ void scheduler(void)
         p = highP; // process with highest priority is the next process
         p->calculatedPriority += p->priority;
       }
+      p->readyTime = p->readyTime + ticks - p->tkRdy;
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      p->tkRun = ticks;
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
@@ -444,6 +456,8 @@ void yield(void)
 {
   acquire(&ptable.lock); //DOC: yieldlock
   myproc()->state = RUNNABLE;
+  myproc()->tkRdy = ticks;
+  myproc()->runningTime = myproc()->runningTime + ticks - myproc()->tkRun;
   sched();
   release(&ptable.lock);
 }
@@ -495,6 +509,7 @@ void sleep(void *chan, struct spinlock *lk)
   // Go to sleep.
   p->chan = chan;
   p->state = SLEEPING;
+  p->tkSlp = ticks;
 
   sched();
 
@@ -519,7 +534,11 @@ wakeup1(void *chan)
 
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if (p->state == SLEEPING && p->chan == chan)
+    {
+      p->sleepingTime = p->sleepingTime + (ticks - p->tkSlp);
       p->state = RUNNABLE;
+      p->tkRdy = ticks;
+    }
 }
 
 // Wake up all processes sleeping on chan.
@@ -545,7 +564,11 @@ int kill(int pid)
       p->killed = 1;
       // Wake process from sleep if necessary.
       if (p->state == SLEEPING)
+      {
+        p->sleepingTime = p->sleepingTime + (ticks - p->tkSlp);
         p->state = RUNNABLE;
+        p->tkRdy = ticks;
+      }
       release(&ptable.lock);
       return 0;
     }
@@ -616,7 +639,6 @@ void iterateProcesses(int pid)
           ch[chCounter] = p->pid;
           chCounter++;
         }
-        // cprintf("CHCOUNTER EQUALS: %d, pid: %d\n", chCounter, p->pid);
       }
     }
   }
@@ -661,8 +683,6 @@ int cps(void)
       cprintf("%s \t %d \t RUNNING \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
     else if (p->state == RUNNABLE)
       cprintf("%s \t %d \t RUNNABLE \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
-    // else if (p->state == UNUSED)
-    //   cprintf("%s \t %d \t UNUSED \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
   }
   release(&ptable.lock);
 
@@ -683,4 +703,72 @@ int changePolicy(int nPolicy)
   cprintf("%d\n", policy);
   exit();
   return 25;
+}
+
+int waitForChild(void)
+{
+  struct proc *p;
+  int havekids, pid;
+  struct proc *curproc = myproc();
+
+  acquire(&ptable.lock);
+  for (;;)
+  {
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if (p->parent != curproc)
+        continue;
+      havekids = 1;
+      if (p->state == ZOMBIE)
+      {
+        p->zombieTime = p->zombieTime + ticks - p->tkZmb;
+        p->terminationTime = ticks;
+        cprintf("For Process With ID= %d We Have\n", p->pid);
+        cprintf("Creation    Time Equals: %d\n", p->creationTime);
+        cprintf("Termination Time Equals: %d\n", p->terminationTime);
+        cprintf("Sleeping    Time Equals: %d\n", p->sleepingTime);
+        cprintf("ReadyTime   Time Equals: %d\n", p->readyTime);
+        cprintf("Running     Time Equals: %d\n", p->runningTime);
+        cprintf("Aggregation Time Equals: %d\n", p->runningTime + p->readyTime + p->sleepingTime);
+        cprintf("Turnaround  Time Equals: %d\n", (p->terminationTime - p->creationTime - p->zombieTime));
+        cprintf("Zombie      Time Equals: %d\n", p->zombieTime);
+        // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        p->priority = 0;
+        p->calculatedPriority = 0;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if (!havekids || curproc->killed)
+    {
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(curproc, &ptable.lock); //DOC: wait-sleep
+  }
+}
+
+void ticketlockInit(void)
+{
+  initTicketlock(&pttable.lock, "pttable");
+}
+
+int ticketlockTest(void)
+{
+  return pttable.lock.locked;
 }

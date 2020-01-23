@@ -7,8 +7,10 @@ struct proc;
 struct rtcdate;
 struct spinlock;
 struct sleeplock;
+struct ticketlock;
 struct stat;
 struct superblock;
+struct timeVariables;
 
 // bio.c
 void            binit(void);
@@ -126,6 +128,9 @@ int             getCount(int);
 int             changePriority(int);
 int             cps(void);
 int             changePolicy(int);
+int             waitForChild(void);
+void            ticketlockInit(void);
+int             ticketlockTest(void);
  
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -144,6 +149,11 @@ void            acquiresleep(struct sleeplock*);
 void            releasesleep(struct sleeplock*);
 int             holdingsleep(struct sleeplock*);
 void            initsleeplock(struct sleeplock*, char*);
+
+// ticketlock.c
+void            acquireTicketlock(struct ticketlock*);
+void            releaseTicketlock(struct ticketlock*);
+void            initTicketlock(struct ticketlock*, char*);
 
 // string.c
 int             memcmp(const void*, const void*, uint);
