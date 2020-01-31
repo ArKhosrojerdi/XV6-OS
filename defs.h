@@ -131,6 +131,7 @@ int             changePolicy(int);
 int             waitForChild(void);
 void            ticketlockInit(void);
 int             ticketlockTest(void);
+void            givepriority(struct proc*);
  
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -153,7 +154,8 @@ void            initsleeplock(struct sleeplock*, char*);
 // ticketlock.c
 void            acquireTicketlock(struct ticketlock*);
 void            releaseTicketlock(struct ticketlock*);
-void            initTicketlock(struct ticketlock*, char*);
+void            initTicketlock(struct ticketlock*);
+int             holdingTicketlock(struct ticketlock*);
 
 // string.c
 int             memcmp(const void*, const void*, uint);

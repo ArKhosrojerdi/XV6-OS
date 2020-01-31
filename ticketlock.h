@@ -1,11 +1,9 @@
-// Mutual exclusion lock. And FIFO.
-struct ticketlock {
-  int locked;       // Is the lock held?
-
-  // For debugging:
-  char *name;        // Name of lock.
+// Mutual exclusion lock.
+struct ticketlock
+{
+  int ticket;        // current ticket number being served
+  int turn;          // next ticket number to be given
+  struct proc *proc; // process currently holding the lock
   struct cpu *cpu;   // The cpu holding the lock.
-  uint pcs[10];      // The call stack (an array of program counters)
-                     // that locked the lock.
-  int pid;
+  
 };

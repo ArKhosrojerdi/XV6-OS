@@ -9,18 +9,19 @@ int main()
   ticketlockInit();
 
   pid = fork();
-  int i = 1;
-  for (; i < NCHILD; i++)
+  int parent = pid;
+  for (int i = 1; i < NCHILD; i++)
   {
-    if (pid < 10)
+    if (pid < 0)
     {
       printf(1, "fork failed\n");
       exit();
     }
     else if (pid > 0)
+    {
       pid = fork();
+    }
   }
-
   if (pid < 0)
   {
     printf(1, "fork failed\n");
@@ -33,13 +34,17 @@ int main()
   }
   else
   {
-    i = 0;
-    for (; i < NCHILD; i++)
+    if (pid == parent)
+    {
+      sleep(1000);
+    }
+    for (int i = 0; i < NCHILD; i++)
       wait();
-    printf(1, "user program finished\n");
-    printf(2, "ticket lock value %d\n", ticketlockTest() - 1);
-  }
 
+    printf(1, "user program finished\n");
+    printf(2, "ticket lock value: %d\n", ticketlockTest() - 1);
+  }
   exit();
+
   return 0;
 }

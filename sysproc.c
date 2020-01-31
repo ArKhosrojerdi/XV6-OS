@@ -138,12 +138,20 @@ int sys_waitForChild(struct timeVariables *tv)
   return 425;
 }
 
-void sys_ticketlockInit(void)
+int sys_ticketlockInit(void)
 {
-  ticketlockInit();
+  struct ticketlock *tl;
+  if (argptr(0, (char**)&tl, sizeof(struct ticketlock*)) < 0)
+  {
+    return -1;
+  }
+
+  initTicketlock(tl);
+  return 0;
 }
 
 int sys_ticketlockTest(void)
 {
-  return ticketlockTest();
+  int var = ticketlockTest();
+  return var;
 }

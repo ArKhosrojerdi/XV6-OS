@@ -16,9 +16,9 @@ struct
 
 struct
 {
-  struct ticketlock lock;
+  struct ticketlock tlock;
   struct proc proc[NPROC];
-} pttable;
+} ttable;
 
 static struct proc *initproc;
 
@@ -91,12 +91,10 @@ allocproc(void)
   char *sp;
 
   acquire(&ptable.lock);
-  // acquireTicketlock(&pttable.lock);
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if (p->state == UNUSED)
       goto found;
   release(&ptable.lock);
-  // releaseTicketlock(&pttable.lock);
   return 0;
 
 found:
@@ -765,10 +763,25 @@ int waitForChild(void)
 
 void ticketlockInit(void)
 {
-  initTicketlock(&pttable.lock, "pttable");
+  initTicketlock(&ttable.tlock);
+  cprintf("\n%d", ttable.tlock.proc);
 }
 
 int ticketlockTest(void)
 {
-  return pttable.lock.locked;
+  struct proc *p;
+  sti();
+  acquireTicketlock(&ttable.tlock);
+  cprintf("name \t pid \t state \t \t priority \t cpr\n");
+  for (p = ttable.proc; p < &ttable.proc[NPROC]; p++)
+  {
+    if (p->state == SLEEPING)
+      cprintf("%s \t %d \t SLEEPING \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
+    else if (p->state == RUNNING)
+      cprintf("%s \t %d \t RUNNING \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
+    else if (p->state == RUNNABLE)
+      cprintf("%s \t %d \t RUNNABLE \t %d \t \t %d\n", p->name, p->pid, p->priority, p->calculatedPriority);
+  }
+  releaseTicketlock(&ttable.tlock);
+  return ttable.tlock.ticket;
 }
