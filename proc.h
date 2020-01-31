@@ -66,8 +66,6 @@ struct proc {
   int tkSlp;
   int tkRun;
   int tkRdy;
-
-  int ticket_no; // ticker for each process
 };
 //   text
 //   original data and bss

@@ -5,5 +5,4 @@ struct ticketlock
   int turn;          // next ticket number to be given
   struct proc *proc; // process currently holding the lock
   struct cpu *cpu;   // The cpu holding the lock.
-  
 };

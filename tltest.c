@@ -10,7 +10,8 @@ int main()
 
   pid = fork();
   int parent = pid;
-  for (int i = 1; i < NCHILD; i++)
+  int i;
+  for (i = 1; i < NCHILD; i++)
   {
     if (pid < 0)
     {
@@ -30,7 +31,7 @@ int main()
   else if (pid == 0)
   {
     printf(1, "child adding to shared counter\n");
-    ticketlockTest();
+    ticketlockTest(); // extra line !!!
   }
   else
   {
@@ -38,7 +39,7 @@ int main()
     {
       sleep(1000);
     }
-    for (int i = 0; i < NCHILD; i++)
+    for (i = 0; i < NCHILD; i++)
       wait();
 
     printf(1, "user program finished\n");

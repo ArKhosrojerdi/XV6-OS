@@ -27,36 +27,26 @@ void initTicketlock(struct ticketlock *lk)
 
 void acquireTicketlock(struct ticketlock *lk)
 {
-
-  uint currentTicket;
-  pushcli();
-
+  int currentTicket;
+  pushcli(); // disable interrupts to avoid deadlock.
   currentTicket = fetch_and_add(&lk->ticket, 1);
-  cprintf("current ticket: %d\n", currentTicket);
 
-  while (lk->turn != currentTicket)
-    ;
+  while (lk->turn != currentTicket);
 
   __sync_synchronize();
-
-  // Record info about lock acquisition for debugging.
   lk->cpu = mycpu();
   lk->proc = myproc();
-  // getcallerpcs(&lk, lk->pcs);
 }
 
 void releaseTicketlock(struct ticketlock *lk)
 {
-  if (!holdingTicket(lk))
+  if (!holdingTicketlock(lk))
     panic("release");
 
-  // lk->pcs[0] = 0;
   lk->proc = 0;
   lk->cpu = 0;
-  // lk->turn++;
   fetch_and_add(&lk->turn, 1);
   __sync_synchronize();
-
   popcli();
 }
 
