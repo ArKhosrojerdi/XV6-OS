@@ -31,7 +31,7 @@ int main()
   else if (pid == 0)
   {
     printf(1, "child adding to shared counter\n");
-    ticketlockTest(); // extra line !!!
+    ticketlockTest();
   }
   else
   {
