@@ -20,6 +20,11 @@ struct
   struct proc proc[NPROC];
 } ttable;
 
+struct ticketlock mutex1;
+struct ticketlock mutex2;
+int rwcounter;
+int readersCount;
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -407,6 +412,7 @@ void scheduler(void)
         // before jumping back to us.
         p = highP; // process with highest priority is the next process
         p->calculatedPriority += p->priority;
+        cprintf("pid: %d \t priority: %d \t cpr: %d\n", p->pid,p->priority, p->calculatedPriority);
       }
       p->readyTime = p->readyTime + ticks - p->tkRdy;
       c->proc = p;
@@ -628,6 +634,7 @@ void iterateProcesses(int pid)
         {
           if (p->pid == ch[i])
           {
+            cprintf("%d, %d\n", p->pid, p->parent->pid);
             flag = 1;
             break;
           }
@@ -691,6 +698,7 @@ int changePriority(int priority)
 {
   struct proc *p = myproc();
   p->priority = priority;
+  cprintf("priority: %d \t pid: %d\n", p->priority, p->pid);
   exit();
   return 1;
 }
@@ -775,4 +783,63 @@ int ticketlockTest(void)
   releaseTicketlock(&ttable.tlock);
   i = (&ttable.tlock)->ticket;
   return i;
+}
+
+void rwinit(void)
+{
+  initTicketlock(&mutex1);
+  initTicketlock(&mutex2);
+
+  rwcounter = 0;
+  readersCount = 0;
+}
+
+int rwtest(int rw)
+{
+
+  if (rw == 0)
+  {
+    int readdata = 100;
+
+    acquireTicketlock(&mutex2);
+    readersCount++;
+    if (readersCount == 1)
+    {
+      acquireTicketlock(&mutex1);
+    }
+    releaseTicketlock(&mutex2);
+
+    //REAAAD
+    readdata = rwcounter;
+    //REAAAD
+
+    acquireTicketlock(&mutex2);
+    readersCount--;
+    if (readersCount == 0)
+    {
+      releaseTicketlock(&mutex1);
+    }
+    releaseTicketlock(&mutex2);
+
+    return readdata;
+  }
+  else if (rw == 1)
+  {
+
+    acquireTicketlock(&mutex1);
+
+    //WRITE
+    rwcounter++;
+    //WRITE
+
+    releaseTicketlock(&mutex1);
+
+    return 1;
+  }
+  else
+  {
+    cprintf("wrong format!!!");
+    return -1;
+  }
+  return 1;
 }

@@ -12,10 +12,10 @@ int main(int argc, char *argv[])
 	wait();
 	fork();
 	wait();
-	fork();
-	wait();
-	fork();
-	wait();
+	// fork();
+	// wait();
+	// fork();
+	// wait();
 
 	getChildren(pid);
 
