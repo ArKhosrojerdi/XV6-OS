@@ -11,5 +11,4 @@ As you know there are several ways to compile and run an O.S. but I strongly rec
 Its time to compile and run xv6 O.S., qemu seems fine but feel free to try new ones. docs at https://www.qemu.org/documentation/
 5-As I dont have VGA console, I can use both ($ make qemu-nox) and ($ make qemu-nox-gdb). //TODO : tell difference.
 
-
-
+Thanks to Farbodxrs for helping to run xv6 on Docker.
